@@ -51,35 +51,34 @@ BOOST_AUTO_TEST_CASE(SimData_read_stream2)
     unlink(outfile);
 }
 
-BOOST_AUTO_TEST_CASE(SimData_read_stream3)
-{
-
-    std::ifstream in(infile);
-    Sequence::SimData d;
-    in >> d >> std::ws;
-    in.close();
-    BOOST_REQUIRE_EQUAL(d.size(), 100);
-    BOOST_REQUIRE_EQUAL(d.numsites(), 196);
-
-    const char* outfile = "SimDataTest.txt";
-    std::ofstream out(outfile);
-    //no new line at end, for extra challenge
-    out << d << '\n' << d;
-    out.close();
-    unsigned count = 0;
-    in.open(outfile);
-    if (!in)
-        std::exit(1);
-    BOOST_REQUIRE_NO_THROW(
-        std::istream_iterator<Sequence::SimData> i(in);
-        for (; i != std::istream_iterator<Sequence::SimData>(); ++i) {
-            BOOST_CHECK(*i == d);
-            ++count;
-        });
-    BOOST_CHECK_EQUAL(count, 2);
-    in.close();
-    unlink(outfile);
-}
+//BOOST_AUTO_TEST_CASE(SimData_read_stream3)
+//{
+//    std::ifstream in(infile);
+//    Sequence::SimData d;
+//    in >> d >> std::ws;
+//    in.close();
+//    BOOST_REQUIRE_EQUAL(d.size(), 100);
+//    BOOST_REQUIRE_EQUAL(d.numsites(), 196);
+//
+//    const char* outfile = "SimDataTest.txt";
+//    std::ofstream out(outfile);
+//    //no new line at end, for extra challenge
+//    out << d << '\n' << d;
+//    out.close();
+//    unsigned count = 0;
+//    in.open(outfile);
+//    if (!in)
+//        std::exit(1);
+//    BOOST_REQUIRE_NO_THROW(
+//        std::istream_iterator<Sequence::SimData> i(in);
+//        for (; i != std::istream_iterator<Sequence::SimData>(); ++i) {
+//            BOOST_CHECK(*i == d);
+//            ++count;
+//        });
+//    BOOST_CHECK_EQUAL(count, 2);
+//    in.close();
+//    unlink(outfile);
+//}
 
 BOOST_AUTO_TEST_CASE(SimData_read_FILE)
 {
