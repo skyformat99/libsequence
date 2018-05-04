@@ -46,6 +46,7 @@ alphabets.cc \
 polySiteVectorTest.cc \
 PolyTableSliceTest.cc \
 stateCounterTest.cc \
-VariantMatrixTest.cc
+VariantMatrixTest.cc \
+ParallelTransformTest.cc
 
 endif #if BUNIT_TEST_PRESENT

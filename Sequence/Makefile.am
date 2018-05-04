@@ -1,4 +1,4 @@
-SUBDIRS = bits SummStats variant_matrix
+SUBDIRS = bits SummStats variant_matrix parallel
 
 pkgincludedir=$(prefix)/include/Sequence
 
