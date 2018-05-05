@@ -15,7 +15,7 @@ namespace Sequence
 
           public:
             thread_joiner(std::vector<std::thread>& threads_)
-                : threads{ threads_ }
+                : threads(threads_)
             {
             }
             ~thread_joiner()
