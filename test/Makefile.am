@@ -4,9 +4,9 @@ check_PROGRAMS=libseq_unit_tests
 
 TESTS=$(check_PROGRAMS)
 
-AM_CXXFLAGS=-g
+AM_CXXFLAGS=$(PTHREAD_CFLAGS) -g
 AM_LDFLAGS=-L../src/.libs -static
-AM_LIBS=-lsequence
+AM_LIBS=$(PTHREAD_LIBS) -lsequence
 
 #if DEBUG
 #AM_CXXFLAGS+=-g

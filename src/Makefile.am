@@ -54,9 +54,9 @@ libsequence_la_SOURCES=  Grantham.cc\
 	variant_matrix/filtering.cc
 
 
-AM_LDFLAGS=-version-info 20:0:0
+AM_LDFLAGS=$(PTHREAD_LIBS) -version-info 20:0:0
 
-AM_CXXFLAGS= -Wall -W -Woverloaded-virtual  -Wnon-virtual-dtor -Wcast-qual -Wconversion -Wsign-conversion -Wsign-promo -Wsynth
+AM_CXXFLAGS= $(PTHREAD_CFLAGS) -Wall -W -Woverloaded-virtual  -Wnon-virtual-dtor -Wcast-qual -Wconversion -Wsign-conversion -Wsign-promo -Wsynth
 
 #if DEBUG
 #AM_CXXFLAGS+=-g
