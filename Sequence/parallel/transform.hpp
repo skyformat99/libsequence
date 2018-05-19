@@ -13,17 +13,17 @@ namespace Sequence
     {
         template <typename InputIterator, typename OutputIterator,
                   typename Function>
-					  InputIterator
+        OutputIterator
         transform(InputIterator first1, InputIterator last1,
                   OutputIterator first2, Function f, const int maxthreads = -1)
         {
             using value = typename InputIterator::value_type;
             using return_type = typename std::result_of<Function(value)>::type;
             if (maxthreads == 1)
-                return std::transform(first1, last1, first1, f);
+                return std::transform(first1, last1, first2, f);
             auto dist = std::distance(first1, last1);
             if (!dist)
-                return first1;
+                return first2;
 
             unsigned nthreads = maxthreads;
             if (maxthreads < 1)
@@ -62,9 +62,9 @@ namespace Sequence
                 {
                     f.get();
                 }
-			return rv;
+            return rv;
         }
-    }
-}
+    } // namespace parallel
+} // namespace Sequence
 
 #endif
