@@ -8,8 +8,7 @@
 #include <unordered_map>
 // For parallelizing nSL:
 #include <functional>
-#include <iostream>
-#include <tbb/parallel_for.h>
+#include <Sequence/parallel/transform.hpp>
 
 using namespace std;
 
@@ -114,7 +113,7 @@ namespace
         rv[3] /= static_cast<double>(nc[1]);
         return rv;
     }
-}
+} // namespace
 
 namespace Sequence
 {
@@ -140,129 +139,23 @@ namespace Sequence
 
     vector<tuple<double, double, uint32_t>>
     nSL_t(const SimData &d, const std::vector<size_t> &core_snps,
-          const std::unordered_map<double, double> &gmap)
+          const std::unordered_map<double, double> &gmap,
+          const int nthreads = -1)
     {
-        vector<tuple<double, double, uint32_t>> rv(core_snps.size());
         using offset_type = SimData::const_site_iterator::difference_type;
-        tbb::parallel_for(
-            tbb::blocked_range<std::size_t>(0, rv.size()),
-            [&rv, &d, &core_snps,
-             &gmap](const tbb::blocked_range<std::size_t> &r) {
-                for (std::size_t i = r.begin(); i < r.end(); ++i)
-                    {
-                        auto temp = __nSLdetails(core_snps[i], d, gmap);
-                        offset_type offset = static_cast<offset_type>(i);
-                        uint32_t dcount = static_cast<uint32_t>(
-                            count((d.sbegin() + offset)->second.begin(),
-                                  (d.sbegin() + offset)->second.end(), '1'));
-                        rv[i]
-                            = make_tuple(log(temp[0]) - log(temp[2]),
-                                         log(temp[1]) - log(temp[3]), dcount);
-                    }
-            });
+        std::vector<std::tuple<double, double, uint32_t>> rv(core_snps.size());
+        parallel::transform(
+            core_snps.begin(), core_snps.end(), rv.begin(),
+            [&d, &gmap](const std::size_t i) {
+                auto temp = __nSLdetails(i, d, gmap);
+                std::uint32_t dcount = static_cast<std::uint32_t>(
+                    std::count((d.sbegin() + i)->second.begin(),
+                               (d.sbegin() + i)->second.end(), '1'));
+                return std::make_tuple(std::log(temp[0]) - std::log(temp[2]),
+                                       std::log(temp[1]) - std::log(temp[3]),
+                                       dcount);
+            },
+            nthreads);
         return rv;
     }
-
-    // double
-    // update_return_value(vector<double> &binned_scores, const double
-    // current_rv)
-    //// normalize, etc.
-    //{
-    //    if (binned_scores.size() > 1)
-    //        {
-    //            double sum = accumulate(binned_scores.begin(),
-    //                                    binned_scores.end(), 0.);
-    //            double sumsq = accumulate(
-    //                binned_scores.begin(), binned_scores.end(), 0.,
-    //                [](double ss, double val) { return ss + pow(val, 2.0);
-    //                });
-    //            double mean = sum /
-    //            static_cast<double>(binned_scores.size());
-    //            double sd = sqrt(sumsq);
-    //            transform(binned_scores.begin(), binned_scores.end(),
-    //                      binned_scores.begin(), [mean, sd](double score) {
-    //                          return (score - mean) / sd;
-    //                      });
-    //            auto me = max_element(
-    //                binned_scores.begin(), binned_scores.end(),
-    //                [](double a, double b) { return fabs(a) < fabs(b); });
-    //            if (!isfinite(current_rv) || fabs(*me) > fabs(current_rv))
-    //                {
-    //                    return fabs(*me);
-    //                }
-    //        }
-    //    return current_rv;
-    //}
-    /*
-      Return max. abs value of standardized nSL and iHS, with the latter as
-      defined by Ferrer-Admetella et al.
-    */
-    // pair<double, double>
-    // snSL(const SimData &d, const double minfreq, const double binsize,
-    //     bool filter_minor, const std::unordered_map<double, double> &gmap)
-    //{
-    //    if (d.empty())
-    //        return make_pair(std::numeric_limits<double>::quiet_NaN(),
-    //                         std::numeric_limits<double>::quiet_NaN());
-
-    //    vector<unsigned> dcounts;
-    //    dcounts.reserve(d.numsites());
-    //    vector<size_t> core_snps;
-
-    //    for (auto p = d.sbegin(); p != d.send(); ++p)
-    //        {
-    //            unsigned dcount = static_cast<unsigned>(
-    //                count(p->second.begin(), p->second.end(), '1'));
-    //            if (dcount && dcount < d.size())
-    //                {
-    //                    double f = static_cast<double>(dcount)
-    //                               / static_cast<double>(d.size());
-    //                    if (filter_minor)
-    //                        {
-    //                            f = min(f, 1. - f);
-    //                            dcount = min(dcount,
-    //                                         static_cast<unsigned>(d.size())
-    //                                             - dcount);
-    //                        }
-    //                    if (f >= minfreq)
-    //                        {
-    //                            core_snps.push_back(
-    //                                static_cast<size_t>(p - d.sbegin()));
-    //                            dcounts.push_back(dcount);
-    //                        }
-    //                }
-    //        }
-    //    if (core_snps.empty())
-    //        return make_pair(std::numeric_limits<double>::quiet_NaN(),
-    //                         std::numeric_limits<double>::quiet_NaN());
-    //    // Get the stats
-    //    auto nSLstats = nSL_t(d, core_snps, gmap);
-    //    const std::size_t nbins = static_cast<size_t>(
-    //        std::ceil(((filter_minor) ? 0.5 : 1.0) / binsize));
-    //    vector<vector<double>> binned_scores_nSL(nbins),
-    //        binned_scores_iHS(nbins);
-    //    double binsize_counts = (binsize * double(d.size()));
-    //    for (size_t i = 0; i < core_snps.size(); ++i)
-    //        {
-    //            size_t bin
-    //                = size_t(static_cast<double>(dcounts[i]) /
-    //                binsize_counts);
-    //            if (isfinite(get<0>(nSLstats[i])))
-    //                {
-    //                    binned_scores_nSL[bin].push_back(get<0>(nSLstats[i]));
-    //                }
-    //            if (isfinite(get<1>(nSLstats[i])))
-    //                {
-    //                    binned_scores_iHS[bin].push_back(get<1>(nSLstats[i]));
-    //                }
-    //        }
-    //    double rv_nSL = numeric_limits<double>::quiet_NaN(),
-    //           rv_iHS = numeric_limits<double>::quiet_NaN();
-    //    for (size_t i = 0; i < binned_scores_nSL.size(); ++i)
-    //        {
-    //            rv_nSL = update_return_value(binned_scores_nSL[i], rv_nSL);
-    //            rv_iHS = update_return_value(binned_scores_iHS[i], rv_iHS);
-    //        }
-    //    return make_pair(rv_nSL, rv_iHS);
-    //}
-}
+} // namespace Sequence
